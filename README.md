@@ -77,18 +77,25 @@ python main.py --maa-dir ..\MAA-v6.14.1-win-x64
 
 ## 源码结构
 
-| 文件或目录 | 关键对象 | 作用与边界 |
-| --- | --- | --- |
-| `main.py` | `main()` | 唯一的运行编排层，创建并销毁 ADB、伪设备、浏览器和 MaaCore。 |
-| `main.py` | `read_env_value()` | 无第三方依赖地读取项目 `.env` 文件。 |
-| `main.py` | `resolve_maa_dir()` | 校验 MaaCore 目录，避免浏览器启动后才发现 DLL 不存在。 |
-| `src/cloud_browser.py` | `CloudGameBrowser` | 只管理 Playwright 浏览器会话，不处理 ADB 或 MAA 任务。 |
-| `src/asst.py` | `Asst` | MaaCore 动态库的 ctypes 封装，负责 C 接口参数转换。 |
-| `src/fake_device.py` | `handle()`、`_exec()` | 简化 ADB 服务端，处理 MaaCore 的设备探测、截图与输入命令。 |
-| `src/fake_device_placeholder.py` | `_screencap()` | 与实时模式共用协议和输入逻辑，仅改变截图返回策略。 |
-| `src/task.py` | `TaskConfig`、`Task` | 将任务 JSON 转成 MaaCore 的任务队列参数。 |
-| `tasks/*.json` | 任务列表 | 运行时数据，不包含执行代码。 |
-| `docs/` | 设计文档 | 记录各模块的协议、页面接入和配置细节。 |
+```text
+MAAE/
+|-- main.py                       # 程序入口，编排浏览器、ADB、伪设备和 MaaCore
+|-- src/                          # 可复用的业务模块
+|   |-- __init__.py
+|   |-- asst.py                   # MaaCore DLL 的 ctypes 封装
+|   |-- cloud_browser.py          # Playwright 浏览器会话与云游戏页面管理
+|   |-- fake_device.py            # 实时截图模式的伪 ADB 设备
+|   |-- fake_device_placeholder.py # 占位图截图模式的伪 ADB 设备
+|   |-- task.py                   # 任务 JSON 到 MaaCore 参数的转换
+|   `-- utils.py                  # 日志等通用辅助函数
+|-- tasks/                        # 可执行的 MAA 任务配置
+|   `-- *.json
+|-- docs/                         # 协议、接入和实现分析文档
+|-- platform-tools/               # 本地 ADB 工具
+|-- .env.example                  # 环境变量模板
+|-- requirements.txt              # Python 依赖
+`-- 环境准备.bat                   # Windows 一键安装依赖与 Chromium
+```
 
 ## 完整运行时序
 
