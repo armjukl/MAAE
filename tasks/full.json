@@ -1,0 +1,79 @@
+{
+    "client_type": "Official",
+    "start_game_enabled": false,
+    "close_game_enabled": false,
+    "tasks": [
+        {
+            "name": "启动",
+            "type": "StartUp",
+            "params": {
+                "client_type": "Official",
+                "start_game_enabled": false
+            }
+        },
+        {
+            "name": "基建",
+            "type": "Infrast",
+            "params": {
+                "mode": 10000,
+                "facility": ["Trade", "Dorm", "Control", "Reception", "Office", "Mfg", "Power"],
+                "dorm_trust_enabled": true,
+                "filename": "normal.json",
+                "plan_index": 0
+            }
+        },
+        {
+            "name": "刷副本",
+            "type": "Fight",
+            "params": {
+                "stage": "1-7",
+                "medicine": 0,
+                "expiring_medicine": 0,
+                "stone": 0,
+                "times": 100,
+                "series": 0,
+                "DrGrandet": false,
+                "report_to_penguin": false,
+                "client_type": "Official"
+            }
+        },
+        {
+            "name": "访问好友",
+            "type": "Visit",
+            "params": {}
+        },
+        {
+            "name": "收邮件",
+            "type": "Mall",
+            "params": {
+                "shopping": true,
+                "credit_fight": false,
+                "buy_first": [
+                    "招聘许可",
+                    "龙门币",
+                    "加急许可"
+                ],
+                "blacklist": [
+                    "家具",
+                    "碳"
+                ]
+            }
+        },
+        {
+            "name": "公开招募",
+            "type": "Recruit",
+            "params": {
+                "select": [4],
+                "confirm": [3, 4],
+                "times": 4,
+                "set_time": true,
+                "report_to_penguin": false
+            }
+        },
+        {
+            "name": "领取奖励",
+            "type": "Award",
+            "params": {}
+        }
+    ]
+}

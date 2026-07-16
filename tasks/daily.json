@@ -1,0 +1,50 @@
+{
+    "client_type": "Official",
+    "start_game_enabled": false,
+    "close_game_enabled": false,
+    "tasks": [
+        {
+            "name": "启动",
+            "type": "StartUp",
+            "params": {
+                "client_type": "Official",
+                "start_game_enabled": false
+            }
+        },
+        {
+            "name": "基建",
+            "type": "Infrast",
+            "params": {
+                "mode": 10000,
+                "facility": ["Trade", "Dorm", "Control", "Reception", "Office", "Mfg", "Power"],
+                "dorm_trust_enabled": true,
+                "filename": "normal.json"
+            }
+        },
+        {
+            "name": "刷1-7",
+            "type": "Fight",
+            "params": {
+                "stage": "1-7",
+                "medicine": 0,
+                "expiring_medicine": 0,
+                "report_to_penguin": false,
+                "penguin_report_stage": "",
+                "client_type": "Official"
+            }
+        },
+        {
+            "name": "访问好友",
+            "type": "Visit",
+            "params": {}
+        },
+        {
+            "name": "收邮件",
+            "type": "Mall",
+            "params": {
+                "shopping": false,
+                "credit_fight": false
+            }
+        }
+    ]
+}

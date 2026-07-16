@@ -1,0 +1,32 @@
+{
+    "client_type": "Official",
+    "start_game_enabled": false,
+    "close_game_enabled": false,
+    "tasks": [
+        {
+            "name": "启动",
+            "type": "StartUp",
+            "params": {
+                "client_type": "Official",
+                "start_game_enabled": false
+            }
+        },
+        {
+            "name": "集成战略",
+            "type": "Roguelike",
+            "params": {
+                "theme": "Sami",
+                "mode": 0,
+                "starts_count": 1,
+                "investment_enabled": true,
+                "investments_count": 0,
+                "stop_when_investment_full": true,
+                "squad": "指挥分队",
+                "roles": "顺其自然",
+                "core_char": "棘刺",
+                "use_support": false,
+                "use_nonfriend_support": false
+            }
+        }
+    ]
+}

@@ -1,0 +1,29 @@
+{
+    "client_type": "Official",
+    "start_game_enabled": false,
+    "close_game_enabled": false,
+    "tasks": [
+        {
+            "name": "启动",
+            "type": "StartUp",
+            "params": {
+                "client_type": "Official",
+                "start_game_enabled": false
+            }
+        },
+        {
+            "name": "刷1-7",
+            "type": "Fight",
+            "params": {
+                "stage": "1-7",
+                "medicine": 0,
+                "expiring_medicine": 0,
+                "stone": 0,
+                "times": 100,
+                "DrGrandet": false,
+                "report_to_penguin": false,
+                "client_type": "Official"
+            }
+        }
+    ]
+}
