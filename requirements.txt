@@ -1,15 +1,2 @@
-# 浏览器自动化
+# 浏览器自动化依赖。
 playwright>=1.50
-# 安装后还需执行: playwright install chromium
-
-# 视觉识别引擎 (模板匹配 + OCR)
-opencv-python>=4.0
-numpy>=2.0
-pillow>=12.0
-
-# OCR (可选，安装后可自动检测文字)
-# paddleocr>=2.0
-# easyocr>=1.7
-
-# 工具
-requests>=2.0

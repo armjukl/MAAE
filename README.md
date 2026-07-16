@@ -1,6 +1,22 @@
 # MAAEase
 
-通过伪装 ADB 设备，让 MaaCore 操作网易云游戏中的《明日方舟》。浏览器会话、ADB 协议和任务配置均由本项目管理。
+MAAEase 通过本地伪装 ADB 设备，将 MaaCore 的截图和触控请求桥接到网易云游戏浏览器页面，使 MAA 能在云游戏中执行《明日方舟》任务。
+
+## 工作方式
+
+```text
+MaaCore -> adb 127.0.0.1:5555 -> 伪装 ADB 设备 -> Playwright 浏览器 -> 网易云游戏
+                                      ^                    |
+                                      +------ 截图缓存 ------+
+```
+
+| 组件 | 作用 |
+| --- | --- |
+| `main.py` | 启动 ADB、伪设备、浏览器与 MaaCore，并执行任务循环。 |
+| `cloud_browser.py` | 管理浏览器启动、登录等待、进入云游戏和资源关闭。 |
+| `fake_device.py` | 每次截图请求直接返回最新的缓存截图。 |
+| `fake_device_placeholder.py` | 按实验逻辑限制实时截图，其余请求返回占位图。 |
+| `tasks/` | MAA 任务配置，例如日常、战斗、基建和肉鸽。 |
 
 ## 环境准备
 
@@ -9,48 +25,106 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-项目自带 `./platform-tools/adb.exe`。首次启动需要在浏览器中手动登录网易云游戏，登录信息保存在 `./.browser_profile/`。
+Windows 下可直接双击 `环境准备.bat`，它会自动执行上述两步。
 
-## MaaCore 目录配置
+项目使用 `./platform-tools/adb.exe`。首次启动时需在弹出的浏览器中手动登录网易云游戏，登录状态保存在 `./.browser_profile/`。
 
-MaaCore 目录必须包含 `MaaCore.dll`。支持四种配置来源，优先级从高到低如下：
+## 本地配置
 
-1. 命令行参数 `--maa-dir`
-2. 系统环境变量 `MAAE_MAA_DIR`
-3. 项目根目录 `.env` 文件中的 `MAAE_MAA_DIR`
-4. `main.py` 顶部的 `DEFAULT_MAA_DIR`
-
-推荐复制 `.env.example` 为 `.env`，然后填写 MaaCore 目录：
+复制 `.env.example` 为 `.env`，并按本机情况填写路径：
 
 ```text
 MAAE_MAA_DIR=..\MAA-v6.14.1-win-x64
-```
-
-`.env` 已加入 Git 忽略规则。相对路径以项目目录为基准，绝对路径也可使用。
-
-占位截图路径使用同一份 `.env` 配置：
-
-```text
 MAAE_PLACEHOLDER_IMAGE=..\netease-cloudgame-reverse\output\after_clicks.png
 ```
 
-未配置或文件不可读时，伪设备会回退到内置的空白 PNG。
+`MAAE_MAA_DIR` 指向包含 `MaaCore.dll` 的目录。占位图路径仅供 `placeholder` 模式使用；不可用时程序会回退到内置空白 PNG。
 
-也可以在单次运行时指定目录：
+MaaCore 路径的优先级从高到低为：
 
-```powershell
-python main.py --maa-dir ..\MAA-v6.14.1-win-x64
-```
+1. 命令行 `--maa-dir`
+2. 系统环境变量 `MAAE_MAA_DIR`
+3. 项目 `.env` 文件
+4. `main.py` 顶部的 `DEFAULT_MAA_DIR`
+
+相对路径以项目目录为基准解析。`.env` 已被 Git 忽略，不会上传个人路径或登录信息。
 
 ## 运行
 
 ```powershell
 python main.py
 python main.py daily
-python main.py daily --device-mode realtime
+python main.py fight --device-mode realtime
 python main.py -t tasks/full.json
+python main.py --maa-dir ..\MAA-v6.14.1-win-x64
 ```
 
-`--device-mode placeholder` 是默认模式，会按实验逻辑限制实时截图返回；`--device-mode realtime` 每次直接返回最新缓存截图。
+`placeholder` 是默认截图模式；使用 `--device-mode realtime` 可切换为持续返回最新缓存截图的实现。运行日志写入 `./logs/`。
 
-运行日志保存在 `./logs/`，任务配置位于 `./tasks/`。
+## 文档
+
+- [伪装 ADB 设备](docs/adb-fake-device.md)
+- [网易云游戏页面接入](docs/netease-cloudgame-api.md)
+- [MaaCore 连接细节](docs/maa-connection-analysis.md)
+- [任务配置](docs/tasks.md)
+- [任务配置执行分析](docs/task-configuration-analysis.md)
+
+## 注意事项
+
+- 请勿提交 `.browser_profile/`、`.env` 或 `logs/`。
+- 项目只读取浏览器中的登录状态；不提供网易云游戏账号密码或令牌的管理功能。
+- 云游戏页面、登录流程和 MaaCore 版本发生变化时，截图、坐标或任务识别可能需要重新验证。
+
+## 源码结构
+
+| 文件或目录 | 关键对象 | 作用与边界 |
+| --- | --- | --- |
+| `main.py` | `main()` | 唯一的运行编排层，创建并销毁 ADB、伪设备、浏览器和 MaaCore。 |
+| `main.py` | `read_env_value()` | 无第三方依赖地读取项目 `.env` 文件。 |
+| `main.py` | `resolve_maa_dir()` | 校验 MaaCore 目录，避免浏览器启动后才发现 DLL 不存在。 |
+| `cloud_browser.py` | `CloudGameBrowser` | 只管理 Playwright 浏览器会话，不处理 ADB 或 MAA 任务。 |
+| `asst.py` | `Asst` | MaaCore 动态库的 ctypes 封装，负责 C 接口参数转换。 |
+| `fake_device.py` | `handle()`、`_exec()` | 简化 ADB 服务端，处理 MaaCore 的设备探测、截图与输入命令。 |
+| `fake_device_placeholder.py` | `_screencap()` | 与实时模式共用协议和输入逻辑，仅改变截图返回策略。 |
+| `config/task.py` | `TaskConfig`、`Task` | 将任务 JSON 转成 MaaCore 的任务队列参数。 |
+| `tasks/*.json` | 任务列表 | 运行时数据，不包含执行代码。 |
+| `docs/` | 设计文档 | 记录各模块的协议、页面接入和配置细节。 |
+
+## 完整运行时序
+
+```text
+读取 .env/参数
+    -> 校验 MaaCore.dll
+    -> adb start-server
+    -> 启动 127.0.0.1:5555 伪设备
+    -> adb connect 127.0.0.1:5555
+    -> 启动持久化 Chromium 并进入 run.html
+    -> 首次刷新浏览器截图缓存
+    -> Asst.load + AsstConnect
+    -> AsstAppendTask + AsstStart
+    -> 处理输入队列并周期刷新截图
+    -> 任务结束后关闭浏览器
+```
+
+这个顺序不能随意交换。MaaCore 连接前必须先存在 ADB 地址；伪设备开始响应截图前必须先绑定浏览器页面；浏览器退出后不应继续运行 MaaCore 任务。
+
+## 配置字段参考
+
+| 字段 | 来源 | 作用 | 缺失时行为 |
+| --- | --- | --- |
+| `MAAE_MAA_DIR` | 参数、系统环境变量或 `.env` | MaaCore 安装目录。 | 启动前报错。 |
+| `MAAE_PLACEHOLDER_IMAGE` | 系统环境变量或 `.env` | `placeholder` 模式使用的回退截图。 | 返回内置空白 PNG。 |
+| `DEFAULT_MAA_DIR` | `main.py` 顶部 | 无外部配置时的本地默认目录。 | 默认为空。 |
+| `DEFAULT_PLACEHOLDER_IMAGE` | `main.py` 顶部 | 无外部配置时的占位图默认路径。 | 默认为空。 |
+| `--device-mode` | 命令行 | 选择 `placeholder` 或 `realtime` 截图策略。 | 默认 `placeholder`。 |
+| `--task` | 命令行 | 指定任务 JSON 路径。 | 使用位置参数对应的 `tasks/*.json`。 |
+
+## 日志与排障入口
+
+每次运行会生成 `logs/run_YYYYMMDD_HHMMSS.log`。建议按照以下层级定位问题：
+
+1. 先确认 MaaCore 目录、`adb start-server` 与 `adb connect` 是否成功。
+2. 再确认浏览器已打开 `run.html`，并出现截图缓存日志。
+3. 确认 `MaaCore 连接结果: True` 后再分析任务问题。
+4. 识别失败优先检查截图模式、缓存字节数和 `wm size`。
+5. 输入失败优先检查 `input tap`、`input swipe`、`[action]` 和 `[swipe]` 日志。
