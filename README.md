@@ -110,18 +110,39 @@ python main.py --maa-dir ..\MAA-v6.14.1-win-x64
 
 ## 配置字段参考
 
-| 字段 | 来源 | 作用 | 缺失时行为 |
-| --- | --- | --- |
-| `MAAE_MAA_DIR` | 参数、系统环境变量或 `.env` | MaaCore 安装目录。 | 启动前报错。 |
-| `MAAE_PLACEHOLDER_IMAGE` | 系统环境变量或 `.env` | `placeholder` 模式使用的回退截图。 | 返回内置空白 PNG。 |
-| `DEFAULT_MAA_DIR` | `main.py` 顶部 | 无外部配置时的本地默认目录。 | 默认为空。 |
-| `DEFAULT_PLACEHOLDER_IMAGE` | `main.py` 顶部 | 无外部配置时的占位图默认路径。 | 默认为空。 |
-| `--device-mode` | 命令行 | 选择 `placeholder` 或 `realtime` 截图策略。 | 默认 `placeholder`。 |
-| `--task` | 命令行 | 指定任务 JSON 路径。 | 使用位置参数对应的 `tasks/*.json`。 |
+### `MAAE_MAA_DIR`
+
+- 来源：`--maa-dir`、系统环境变量、`.env` 或 `DEFAULT_MAA_DIR`。
+- 作用：指定包含 `MaaCore.dll` 的 MaaCore 安装目录。
+- 缺失时行为：程序在启动浏览器前报错。
+
+### `MAAE_PLACEHOLDER_IMAGE`
+
+- 来源：系统环境变量、`.env` 或 `DEFAULT_PLACEHOLDER_IMAGE`。
+- 作用：为 `placeholder` 截图模式指定回退 PNG。
+- 缺失时行为：伪设备返回内置空白 PNG。
+
+### `DEFAULT_MAA_DIR` 与 `DEFAULT_PLACEHOLDER_IMAGE`
+
+- 来源：`main.py` 顶部常量。
+- 作用：为未使用参数、系统环境变量或 `.env` 的本地环境提供默认值。
+- 缺失时行为：两者默认均为空字符串。
+
+### `--device-mode`
+
+- 来源：命令行参数。
+- 作用：选择 `placeholder` 或 `realtime` 截图策略。
+- 缺失时行为：默认使用 `placeholder`。
+
+### `--task`
+
+- 来源：命令行参数。
+- 作用：指定任务 JSON 路径。
+- 缺失时行为：使用位置参数对应的 `tasks/*.json` 文件。
 
 ## 日志与排障入口
 
-每次运行会生成 `logs/run_YYYYMMDD_HHMMSS.log`。建议按照以下层级定位问题：
+每次运行会生成 `logs/run_YYYYMMDD_HHMMSS.log`。建议按以下层级定位问题：
 
 1. 先确认 MaaCore 目录、`adb start-server` 与 `adb connect` 是否成功。
 2. 再确认浏览器已打开 `run.html`，并出现截图缓存日志。
