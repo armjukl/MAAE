@@ -10,7 +10,6 @@ A_CNXN, A_OPEN, A_OKAY, A_WRTE, A_CLSE = 0x4E584E43, 0x4E45504F, 0x59414B4F, 0x4
 A_VERSION, A_MAXDATA = 0x01000001, 1024 * 1024
 
 _page = None
-_active_swipe = None
 _action_queue = queue.Queue()  # ADB 线程 → 主线程的触摸事件队列
 _last_real_screencap_time = 0  # 上次返回真实截图的时间
 
@@ -127,11 +126,6 @@ _screencap_lock = threading.Lock()
 
 def process_actions():
     """主线程每帧调用，执行 ADB 线程排队的触摸事件。swipe 在后台线程执行不阻塞。"""
-    global _active_swipe
-    if _active_swipe is not None:
-        _advance_swipe()
-        return
-
     while True:
         try:
             action = _action_queue.get_nowait()
@@ -147,12 +141,8 @@ def process_actions():
             elif action[0] == "swipe":
                 _, x1, y1, x2, y2, dur = action
                 # 云游戏环境下超过 500ms 的 swipe 不生效，截断
-                dur = min(max(dur, 1), 500)
-                _page.mouse.move(x1, y1)
-                _page.mouse.down()
-                _active_swipe = (x1, y1, x2, y2, dur, time.monotonic())
-                _log.info("[action] swipe started")
-                return
+                dur = min(dur, 500)
+                threading.Thread(target=_do_swipe, args=(x1, y1, x2, y2, dur), daemon=True).start()
                 _log.info(f"[action] swipe {x1},{y1} → {x2},{y2} dur={dur}")
         except Exception as e:
             _log.info(f"[action] error: {e}")
@@ -175,26 +165,6 @@ def _do_swipe(x1, y1, x2, y2, dur):
         _log.info(f"[swipe] done: {x1},{y1} → {x2},{y2} dur={dur}ms steps={steps}")
     except Exception as e:
         _log.info(f"[swipe] error: {e}")
-
-
-def _advance_swipe():
-    """Advance one swipe frame on the Playwright owning thread."""
-    global _active_swipe
-    x1, y1, x2, y2, dur, started_at = _active_swipe
-    try:
-        progress = min((time.monotonic() - started_at) * 1000 / dur, 1.0)
-        _page.mouse.move(x1 + (x2 - x1) * progress, y1 + (y2 - y1) * progress)
-        if progress >= 1.0:
-            _page.mouse.up()
-            _active_swipe = None
-            _log.info(f"[swipe] done: {x1},{y1} to {x2},{y2} dur={dur}ms")
-    except Exception as e:
-        _log.info(f"[swipe] error: {e}")
-        try:
-            _page.mouse.up()
-        except Exception:
-            pass
-        _active_swipe = None
 
 
 def update_screencap():
