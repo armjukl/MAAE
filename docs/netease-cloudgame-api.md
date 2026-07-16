@@ -17,7 +17,7 @@
 
 ## 浏览器流程
 
-`cloud_browser.py` 按以下顺序执行：
+`src/cloud_browser.py` 按以下顺序执行：
 
 1. 使用持久化 Chromium 上下文启动浏览器。
 2. 使用 `./.browser_profile/` 保存站点登录状态。
@@ -45,14 +45,14 @@
 
 | 现象 | 处理建议 |
 | --- | --- |
-| 浏览器没有打开 | 运行 `playwright install chromium`，并检查 `cloud_browser.py` 的启动日志。 |
+| 浏览器没有打开 | 运行 `playwright install chromium`，并检查 `src/cloud_browser.py` 的启动日志。 |
 | 一直等待登录 | 在浏览器窗口完成登录；确认站点未被网络策略拦截。 |
 | 游戏页加载后无画面 | 检查 `run.html` 是否仍在地址栏中，以及浏览器是否有排队或提示页面。 |
 | 截图不是游戏画面 | 查看页面中的 `canvas` 或 `video` 是否已加载，并尝试 `realtime` 截图模式。 |
 
 ## 源码职责与对象生命周期
 
-浏览器接入全部封装在 `cloud_browser.py` 的 `CloudGameBrowser` 类中。该类保存三个有生命周期关系的对象：
+浏览器接入全部封装在 `src/cloud_browser.py` 的 `CloudGameBrowser` 类中。该类保存三个有生命周期关系的对象：
 
 ```text
 sync_playwright().start()

@@ -154,15 +154,15 @@ def setup_logging():
 def get_device_functions(mode: str):
     """根据截图模式加载伪设备实现。"""
     if mode == "placeholder":
-        from fake_device_placeholder import process_actions, set_page, start, update_screencap
+        from src.fake_device_placeholder import process_actions, set_page, start, update_screencap
     else:
-        from fake_device import process_actions, set_page, start, update_screencap
+        from src.fake_device import process_actions, set_page, start, update_screencap
     return start, set_page, update_screencap, process_actions
 
 
 def main():
     """启动自动化任务并在结束后清理资源。"""
-    from config.task import TaskConfig
+    from src.task import TaskConfig
 
     args = parse_args()
     log, _ = setup_logging()
@@ -198,7 +198,7 @@ def main():
         log.info(f"ADB 连接结果: {result.stdout.strip()}")
 
         # 浏览器会话由独立模块管理。
-        from cloud_browser import CloudGameBrowser
+        from src.cloud_browser import CloudGameBrowser
 
         profile_dir = PROJECT_DIR / ".browser_profile"
         browser = CloudGameBrowser(profile_dir, GAME_CODE, CLOUD_URL, log)
@@ -210,8 +210,8 @@ def main():
             time.sleep(0.3)
 
         # 加载 MaaCore 并执行任务。
-        from asst import Asst
-        from utils import InstanceOptionType
+        from src.asst import Asst
+        from src.utils import InstanceOptionType
 
         log.info(f"正在加载 MaaCore: {maa_dir}")
         Asst.load(maa_dir)

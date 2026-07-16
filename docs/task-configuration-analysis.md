@@ -35,7 +35,7 @@ python main.py -t .\my-tasks.json
 
 ## `TaskConfig` 解析细节
 
-实现位于 `config/task.py`。两个数据类分别表示整体配置与单个任务：
+实现位于 `src/task.py`。两个数据类分别表示整体配置与单个任务：
 
 ```python
 TaskConfig(
