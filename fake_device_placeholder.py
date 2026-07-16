@@ -1,5 +1,5 @@
 """伪装 ADB 设备——监听 5555，真 adb daemon 连过来。"""
-import socket, struct, threading, time, queue, logging
+import os, socket, struct, threading, time, queue, logging
 
 _log = logging.getLogger("fake_device")
 
@@ -40,15 +40,15 @@ def handle(conn, addr):
                 buf = buf[total:]
 
                 if cmd == A_CNXN:
-                    # ro.adb.secure=0 skips AUTH
+                    # 关闭 ADB 鉴权，避免客户端发起认证流程。
                     banner = b"device::ro.product.name=cloud;ro.adb.secure=0;ro.product.model=Playwright;ro.product.device=cloud;"
                     conn.sendall(adb_header(A_CNXN, A_VERSION, A_MAXDATA, banner))
                     _log.info("[device] CNXN sent")
 
                 elif cmd == A_OPEN:
                     dest = payload.decode().rstrip("\0")
-                    remote_id = arg0   # client's local_id = remote from our perspective
-                    our_id = (arg0 % 65535) + 1  # unique server local_id per stream
+                    remote_id = arg0   # 从服务端视角看，这是客户端的本地流标识。
+                    our_id = (arg0 % 65535) + 1  # 为每条数据流生成唯一的服务端标识。
                     _log.info(f"[device] OPEN {dest[:80]} remote={remote_id}")
 
                     if "shell:" in dest or "exec-out:" in dest or "exec:" in dest:
@@ -60,7 +60,7 @@ def handle(conn, addr):
                             result = b"\n"
                         conn.sendall(adb_header(A_OKAY, our_id, remote_id, b""))
                         # 分片发送：ADB 协议单条 WRTE 不能超过 A_MAXDATA (1MB)
-                        MAX_CHUNK = 512 * 1024  # 512KB per chunk, well under 1MB limit
+                        MAX_CHUNK = 512 * 1024  # 每段 512KB，低于 ADB 的 1MB 限制。
                         offset = 0
                         while offset < len(result):
                             chunk = result[offset:offset + MAX_CHUNK]
@@ -104,7 +104,7 @@ def _exec(cmd):
         if "android_id" in cmd: return b"0123456789abcdef\n"
         return b"\n"
     if "wm" in cmd:
-        # MAA display command pipes: wm size | tail -n 1 | grep -o -E [0-9]+
+        # 兼容 MAA 查询屏幕尺寸时发送的 wm size 管道命令。
         return f"{DISPLAY_WIDTH}\n{DISPLAY_HEIGHT}\n".encode()
     if "getprop" in cmd:
         if "release" in cmd: return b"11\n"
@@ -200,7 +200,10 @@ def _screencap():
         _log.info(f"[screencap] real: {len(data)} bytes")
         return data
     try:
-        with open(r"C:\Users\Administrator\Downloads\neteasegame\netease-cloudgame-reverse\output\after_clicks.png", "rb") as f:
+        placeholder_path = os.environ.get("MAAE_PLACEHOLDER_IMAGE")
+        if not placeholder_path:
+            raise FileNotFoundError("未配置占位图路径")
+        with open(placeholder_path, "rb") as f:
             placeholder = f.read()
     except:
         placeholder = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x07\x80\x00\x00\x048\x08\x02\x00\x00\x00\x8e\x1b\xf6\xcc\x00\x00\x00\x0cIDATx\x9cc\x00\x01\x11\x00\x01\xc8\x89\xe8\x1f\x00\x00\x00\x00IEND\xaeB`\x82"

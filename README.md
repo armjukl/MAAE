@@ -1,63 +1,56 @@
-# maaease
+# MAAEase
 
-网易云游戏 + MAA 自动化，通过伪装 ADB 设备让 MaaCore 控制浏览器中的云游戏。
-
-## 文件说明
-
-| 文件 | 作用 |
-|------|------|
-| `test_v1_fake_adb.py` | **主入口** — 启动 ADB / 浏览器 / MAA，主循环 |
-| `fake_device.py` | 伪装 ADB 设备（监听 5555），截屏 + 触摸转发 |
-| `asst.py` | MaaCore (MAA) Python 绑定 |
-| `utils.py` | MAA 配置枚举 (InstanceOptionType 等) |
-| `requirements.txt` | Python 依赖 |
+通过伪装 ADB 设备，让 MaaCore 操作网易云游戏中的《明日方舟》。浏览器会话、ADB 协议和任务配置均由本项目管理。
 
 ## 环境准备
 
-```bash
-# 1. Python 依赖
+```powershell
 pip install -r requirements.txt
-
-# 2. Chromium 浏览器 (Playwright)
 playwright install chromium
-
-# 3. 准备以下目录/文件：
-#    - MAA 安装目录 (如 MAA-v6.14.1-win-x64/)
-#    - Android platform-tools (adb.exe)
 ```
 
-## 配置
+项目自带 `./platform-tools/adb.exe`。首次启动需要在浏览器中手动登录网易云游戏，登录信息保存在 `./.browser_profile/`。
 
-编辑 `test_v1_fake_adb.py` 顶部的配置：
+## MaaCore 目录配置
 
-```python
-ADB_DIR = r"你的platform-tools目录"
-MAA_DIR = r"你的MAA安装目录"
-GAME_CODE = "mrfz"        # 明日方舟
+MaaCore 目录必须包含 `MaaCore.dll`。支持四种配置来源，优先级从高到低如下：
+
+1. 命令行参数 `--maa-dir`
+2. 系统环境变量 `MAAE_MAA_DIR`
+3. 项目根目录 `.env` 文件中的 `MAAE_MAA_DIR`
+4. `main.py` 顶部的 `DEFAULT_MAA_DIR`
+
+推荐复制 `.env.example` 为 `.env`，然后填写 MaaCore 目录：
+
+```text
+MAAE_MAA_DIR=..\MAA-v6.14.1-win-x64
+```
+
+`.env` 已加入 Git 忽略规则。相对路径以项目目录为基准，绝对路径也可使用。
+
+占位截图路径使用同一份 `.env` 配置：
+
+```text
+MAAE_PLACEHOLDER_IMAGE=..\netease-cloudgame-reverse\output\after_clicks.png
+```
+
+未配置或文件不可读时，伪设备会回退到内置的空白 PNG。
+
+也可以在单次运行时指定目录：
+
+```powershell
+python main.py --maa-dir ..\MAA-v6.14.1-win-x64
 ```
 
 ## 运行
 
-```bash
-python test_v1_fake_adb.py
+```powershell
+python main.py
+python main.py daily
+python main.py daily --device-mode realtime
+python main.py -t tasks/full.json
 ```
 
-首次运行需要手动登录网易云游戏，之后浏览器 profile 会保存登录状态。
+`--device-mode placeholder` 是默认模式，会按实验逻辑限制实时截图返回；`--device-mode realtime` 每次直接返回最新缓存截图。
 
-## 工作流程
-
-```
-test_v1_fake_adb.py
-  ├── 启动 adb daemon
-  ├── 启动 fake_device (监听 127.0.0.1:5555)
-  ├── adb connect 127.0.0.1:5555
-  ├── 启动 Chromium → 打开 cg.163.com → 进入云游戏
-  ├── 加载 MaaCore → 连接伪装设备
-  └── 主循环: process_actions() + update_screencap()
-```
-
-.browser_profile/为储存网易云游戏token实现自动登录
-
-## 日志
-
-运行日志保存在 `logs/run_YYYYMMDD_HHMMSS.log`，每次启动不覆盖。
+运行日志保存在 `./logs/`，任务配置位于 `./tasks/`。

@@ -1,3 +1,4 @@
 .browser_profile/
 logs/
 oldfiles/
+.env
